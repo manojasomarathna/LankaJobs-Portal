@@ -12,28 +12,31 @@
 </div>
 
 <!-- Search -->
-<div class="search-section mb-4">
-  <form method="GET">
+<div class="search-section mb-3">
+  <form method="GET" id="searchForm">
     <div class="row g-3 align-items-end">
-      <div class="col-md-5">
-        <label class="form-label small fw-500 mb-1">Keywords</label>
+      <div class="col-md-6">
+        <label class="form-label small fw-500 mb-1">Job Title / Keywords</label>
         <div class="input-group">
           <span class="input-group-text bg-white" style="border-radius:10px 0 0 10px;">
             <i class="bi bi-search text-muted"></i>
           </span>
-          <input type="text" name="q" value="{{ keyword }}" class="form-control border-start-0"
-                 placeholder="e.g. Python Developer" style="border-radius:0 10px 10px 0;"/>
+          <input type="text" name="q" id="keywordInput" value="{{ keyword }}" class="form-control border-start-0"
+                 placeholder="e.g. Software Engineer, Accountant..." style="border-radius:0 10px 10px 0;"/>
         </div>
       </div>
-      <div class="col-md-4">
-        <label class="form-label small fw-500 mb-1">Location</label>
-        <div class="input-group">
-          <span class="input-group-text bg-white" style="border-radius:10px 0 0 10px;">
-            <i class="bi bi-geo-alt text-muted"></i>
-          </span>
-          <input type="text" name="location" value="{{ location }}" class="form-control border-start-0"
-                 placeholder="e.g. Sri Lanka" style="border-radius:0 10px 10px 0;"/>
-        </div>
+      <div class="col-md-3">
+        <label class="form-label small fw-500 mb-1">Country</label>
+        <select name="location" class="form-select">
+          <option value="" {% if location=='' %}selected{% endif %}>🌍 All Countries</option>
+          <option value="India" {% if location=='India' %}selected{% endif %}>🇮🇳 India</option>
+          <option value="United Kingdom" {% if location=='United Kingdom' %}selected{% endif %}>🇬🇧 United Kingdom</option>
+          <option value="Australia" {% if location=='Australia' %}selected{% endif %}>🇦🇺 Australia</option>
+          <option value="Canada" {% if location=='Canada' %}selected{% endif %}>🇨🇦 Canada</option>
+          <option value="Germany" {% if location=='Germany' %}selected{% endif %}>🇩🇪 Germany</option>
+          <option value="Dubai" {% if location=='Dubai' %}selected{% endif %}>🇦🇪 Dubai / UAE</option>
+          <option value="Singapore" {% if location=='Singapore' %}selected{% endif %}>🇸🇬 Singapore</option>
+        </select>
       </div>
       <div class="col-md-3">
         <button class="btn btn-primary w-100" type="submit">
@@ -42,6 +45,26 @@
       </div>
     </div>
   </form>
+
+  <!-- Quick Search Job Titles -->
+  <div class="mt-3">
+    <p class="text-muted small mb-2 fw-500"><i class="bi bi-lightning-charge me-1 text-warning"></i>Popular Job Titles:</p>
+    <div class="d-flex flex-wrap gap-2">
+      {% set popular = [
+        'Software Engineer', 'Python Developer', 'Web Developer', 'Data Analyst',
+        'Accountant', 'Marketing Manager', 'HR Manager', 'Project Manager',
+        'Graphic Designer', 'Network Engineer', 'Business Analyst', 'DevOps Engineer',
+        'Full Stack Developer', 'UI UX Designer', 'Financial Analyst', 'Sales Manager'
+      ] %}
+      {% for title in popular %}
+      <button type="button" class="btn btn-sm btn-outline-secondary quick-search-btn"
+              style="border-radius:20px; font-size:0.78rem;"
+              onclick="document.getElementById('keywordInput').value='{{ title }}'; document.getElementById('searchForm').submit();">
+        {{ title }}
+      </button>
+      {% endfor %}
+    </div>
+  </div>
 </div>
 
 {% if error %}
