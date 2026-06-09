@@ -1,9 +1,13 @@
 import os
+import requests as http_requests
 from flask import Flask, render_template, redirect, url_for, request, flash, session
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from models import db, User, Job, Application
+
+JOOBLE_API_KEY = '04fdd77e-720e-4ad3-a47a-ae9e69184dc0'
+JOOBLE_API_URL = f'https://jooble.org/api/{JOOBLE_API_KEY}'
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'lankajobs-secret-key-2024'
@@ -237,6 +241,44 @@ def delete_user(user_id):
     db.session.commit()
     flash('User deleted.', 'success')
     return redirect(url_for('dashboard'))
+
+# ─── External Jobs (Jooble) ─────────────────────────────────────────────────
+
+@app.route('/external-jobs')
+def external_jobs():
+    keyword  = request.args.get('q', 'software engineer')
+    location = request.args.get('location', 'Sri Lanka')
+    page     = int(request.args.get('page', 1))
+
+    payload = {
+        'keywords': keyword,
+        'location': location,
+        'page': page
+    }
+    ext_jobs = []
+    total    = 0
+    error    = None
+
+    try:
+        resp = http_requests.post(
+            JOOBLE_API_URL,
+            json=payload,
+            headers={'Content-Type': 'application/json'},
+            timeout=10
+        )
+        data     = resp.json()
+        ext_jobs = data.get('jobs', [])
+        total    = data.get('totalCount', 0)
+    except Exception as e:
+        error = 'Could not fetch jobs. Please try again.'
+
+    return render_template('external_jobs.html',
+                           ext_jobs=ext_jobs,
+                           keyword=keyword,
+                           location=location,
+                           page=page,
+                           total=total,
+                           error=error)
 
 # ─── Init & Run ──────────────────────────────────────────────────────────────
 

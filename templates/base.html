@@ -21,6 +21,7 @@
     <div class="collapse navbar-collapse" id="navMenu">
       <ul class="navbar-nav ms-auto align-items-center gap-1">
         <li class="nav-item"><a class="nav-link text-white" href="{{ url_for('jobs') }}"><i class="bi bi-search me-1"></i>Browse Jobs</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="{{ url_for('external_jobs') }}"><i class="bi bi-globe me-1"></i>External Jobs</a></li>
         {% if current_user.is_authenticated %}
           <li class="nav-item"><a class="nav-link text-white" href="{{ url_for('dashboard') }}"><i class="bi bi-grid me-1"></i>Dashboard</a></li>
           <li class="nav-item"><a class="nav-link text-white" href="{{ url_for('profile') }}"><i class="bi bi-person me-1"></i>Profile</a></li>

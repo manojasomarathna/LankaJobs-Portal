@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="d-flex align-items-center gap-3 mb-4">
+  <div style="width:52px;height:52px;background:#eff6ff;border-radius:14px;display:flex;align-items:center;justify-content:center;">
+    <i class="bi bi-globe text-primary fs-4"></i>
+  </div>
+  <div>
+    <h4 class="fw-bold mb-0">External Jobs</h4>
+    <p class="text-muted small mb-0">Live jobs powered by <strong>Jooble</strong> — from around the web</p>
+  </div>
+</div>
+
+<!-- Search -->
+<div class="search-section mb-4">
+  <form method="GET">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-5">
+        <label class="form-label small fw-500 mb-1">Keywords</label>
+        <div class="input-group">
+          <span class="input-group-text bg-white" style="border-radius:10px 0 0 10px;">
+            <i class="bi bi-search text-muted"></i>
+          </span>
+          <input type="text" name="q" value="{{ keyword }}" class="form-control border-start-0"
+                 placeholder="e.g. Python Developer" style="border-radius:0 10px 10px 0;"/>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small fw-500 mb-1">Location</label>
+        <div class="input-group">
+          <span class="input-group-text bg-white" style="border-radius:10px 0 0 10px;">
+            <i class="bi bi-geo-alt text-muted"></i>
+          </span>
+          <input type="text" name="location" value="{{ location }}" class="form-control border-start-0"
+                 placeholder="e.g. Sri Lanka" style="border-radius:0 10px 10px 0;"/>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <button class="btn btn-primary w-100" type="submit">
+          <i class="bi bi-search me-1"></i>Search Jobs
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+{% if error %}
+<div class="alert alert-danger"><i class="bi bi-exclamation-circle me-2"></i>{{ error }}</div>
+{% endif %}
+
+{% if total > 0 %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <p class="text-muted small mb-0">
+    Found <strong>{{ total }}</strong> jobs for <strong>"{{ keyword }}"</strong> in <strong>{{ location }}</strong>
+  </p>
+  <span class="badge" style="background:#eff6ff;color:#1d4ed8;padding:6px 14px;border-radius:8px;">
+    Page {{ page }}
+  </span>
+</div>
+{% endif %}
+
+<div class="row">
+  {% for job in ext_jobs %}
+  <div class="col-md-6 mb-4">
+    <div class="card job-card h-100 border-0">
+      <div class="card-body">
+
+        <div class="d-flex align-items-start gap-3 mb-3">
+          <div style="width:48px;height:48px;background:#f0fdf4;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-globe text-success fs-5"></i>
+          </div>
+          <div class="flex-grow-1">
+            <h6 class="job-title mb-0">{{ job.title }}</h6>
+            <span class="text-muted small">{{ job.company }}</span>
+          </div>
+          <span class="badge" style="background:#f0fdf4;color:#166534;font-size:0.72rem;">External</span>
+        </div>
+
+        <div class="d-flex flex-wrap gap-3 mb-2">
+          {% if job.location %}
+          <span class="job-meta"><i class="bi bi-geo-alt"></i>{{ job.location }}</span>
+          {% endif %}
+          {% if job.updated %}
+          <span class="job-meta"><i class="bi bi-calendar3"></i>{{ job.updated[:10] }}</span>
+          {% endif %}
+        </div>
+
+        {% if job.salary %}
+        <span class="salary-badge mb-2 d-inline-block"><i class="bi bi-cash me-1"></i>{{ job.salary }}</span>
+        {% endif %}
+
+        {% if job.snippet %}
+        <p class="small text-muted mt-2 mb-0" style="line-height:1.6;">
+          {{ job.snippet[:180] }}...
+        </p>
+        {% endif %}
+
+      </div>
+      <div class="card-footer d-flex justify-content-between align-items-center">
+        <a href="{{ job.link }}" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-sm px-4">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Apply on Site
+        </a>
+        <small class="text-muted">via Jooble</small>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  {% if not error %}
+  <div class="col-12 text-center py-5">
+    <i class="bi bi-search text-muted" style="font-size:3rem;"></i>
+    <p class="text-muted mt-3 mb-1">No external jobs found.</p>
+    <p class="text-muted small">Try different keywords or location</p>
+  </div>
+  {% endif %}
+  {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if total > 0 %}
+<div class="d-flex justify-content-center gap-2 mt-3">
+  {% if page > 1 %}
+  <a href="{{ url_for('external_jobs', q=keyword, location=location, page=page-1) }}"
+     class="btn btn-outline-primary px-4">
+    <i class="bi bi-arrow-left me-1"></i>Previous
+  </a>
+  {% endif %}
+  {% if ext_jobs|length == 20 %}
+  <a href="{{ url_for('external_jobs', q=keyword, location=location, page=page+1) }}"
+     class="btn btn-primary px-4">
+    Next <i class="bi bi-arrow-right ms-1"></i>
+  </a>
+  {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}
