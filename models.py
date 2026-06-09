@@ -10,7 +10,8 @@ class User(UserMixin, db.Model):
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
-    role = db.Column(db.String(20), nullable=False, default='jobseeker')  # jobseeker, employer, admin
+    role = db.Column(db.String(20), nullable=False, default='jobseeker')
+    cv_path = db.Column(db.String(200))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     jobs = db.relationship('Job', backref='employer', lazy=True)

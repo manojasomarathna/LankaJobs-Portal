@@ -26,6 +26,9 @@
         {% if current_user.is_authenticated %}
           <li class="nav-item"><a class="nav-link text-white" href="{{ url_for('dashboard') }}"><i class="bi bi-grid me-1"></i>Dashboard</a></li>
           <li class="nav-item"><a class="nav-link text-white" href="{{ url_for('profile') }}"><i class="bi bi-person me-1"></i>Profile</a></li>
+          {% if current_user.role == 'jobseeker' %}
+          <li class="nav-item"><a class="nav-link" style="color:#fbbf24;" href="{{ url_for('cv_job_match') }}"><i class="bi bi-magic me-1"></i>CV Match</a></li>
+          {% endif %}
           <li class="nav-item ms-2">
             <a class="nav-link nav-register" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
           </li>

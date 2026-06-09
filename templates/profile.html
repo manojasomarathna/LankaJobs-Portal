@@ -23,7 +23,7 @@
     <div class="card border-0" style="border-radius:18px;box-shadow:0 8px 40px rgba(0,0,0,0.1);">
       <div class="card-body p-4 p-md-5">
         <h5 class="fw-bold mb-4"><i class="bi bi-pencil-square me-2 text-primary"></i>Edit Profile</h5>
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
           <div class="mb-3">
             <label class="form-label">Full Name</label>
             <input type="text" name="name" class="form-control" value="{{ current_user.name }}" required/>
@@ -34,10 +34,24 @@
                    style="background:#f8fafc;"/>
             <small class="text-muted">Email cannot be changed</small>
           </div>
-          <div class="mb-4">
+          <div class="mb-3">
             <label class="form-label">New Password <span class="text-muted">(leave blank to keep current)</span></label>
             <input type="password" name="password" class="form-control" placeholder="Enter new password"/>
           </div>
+          {% if current_user.role == 'jobseeker' %}
+          <div class="mb-4">
+            <label class="form-label">Upload CV / Resume</label>
+            {% if current_user.cv_path %}
+            <div class="d-flex align-items-center gap-2 mb-2 p-2 rounded" style="background:#f0fdf4;border:1px solid #bbf7d0;">
+              <i class="bi bi-file-earmark-check-fill text-success"></i>
+              <span class="small text-success fw-500">CV Uploaded: {{ current_user.cv_path }}</span>
+              <a href="{{ url_for('cv_job_match') }}" class="btn btn-sm ms-auto" style="background:#dcfce7;color:#166534;"><i class="bi bi-magic me-1"></i>Find Matching Jobs</a>
+            </div>
+            {% endif %}
+            <input type="file" name="cv" class="form-control" accept=".pdf,.doc,.docx"/>
+            <small class="text-muted">PDF, DOC, DOCX — Max 5MB</small>
+          </div>
+          {% endif %}
           <button type="submit" class="btn btn-primary w-100 py-2">
             <i class="bi bi-check-circle me-2"></i>Save Changes
           </button>

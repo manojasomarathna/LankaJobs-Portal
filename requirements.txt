@@ -6,3 +6,4 @@ python-dotenv==1.0.0
 requests==2.32.5
 google-genai
 google-generativeai
+pdfplumber

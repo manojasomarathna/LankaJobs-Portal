@@ -227,9 +227,91 @@ def profile():
         current_user.name = request.form['name']
         if request.form['password']:
             current_user.password = generate_password_hash(request.form['password'])
+        if 'cv' in request.files:
+            file = request.files['cv']
+            if file and allowed_file(file.filename):
+                filename = secure_filename(f"profile_{current_user.id}_{file.filename}")
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                current_user.cv_path = filename
         db.session.commit()
         flash('Profile updated.', 'success')
     return render_template('profile.html')
+
+
+@app.route('/cv-job-match')
+@login_required
+def cv_job_match():
+    if current_user.role != 'jobseeker':
+        flash('Only job seekers can use this feature.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    if not current_user.cv_path:
+        flash('Please upload your CV in your profile first.', 'warning')
+        return redirect(url_for('profile'))
+
+    # Read CV text
+    cv_full_path = os.path.join(app.config['UPLOAD_FOLDER'], current_user.cv_path)
+    cv_text = ''
+    try:
+        if current_user.cv_path.endswith('.pdf'):
+            import pdfplumber
+            with pdfplumber.open(cv_full_path) as pdf:
+                cv_text = ' '.join([p.extract_text() or '' for p in pdf.pages])
+        else:
+            with open(cv_full_path, 'rb') as f:
+                cv_text = f.read().decode('utf-8', errors='ignore')[:3000]
+    except Exception:
+        cv_text = ''
+
+    # Get all jobs from DB
+    all_jobs = Job.query.order_by(Job.created_at.desc()).all()
+    jobs_list = '\n'.join(
+        [f"ID:{j.id} | {j.title} at {j.company}, {j.location} | {j.description[:150]}" for j in all_jobs]
+    ) or 'No jobs available.'
+
+    matched_jobs = []
+    ai_summary   = ''
+    error        = None
+
+    try:
+        prompt = f"""Analyze this CV and match it with the available jobs below.
+Return a JSON array of matched job IDs with a short reason why each matches.
+Format: [{"id": 1, "reason": "..."}]
+Only return the JSON, nothing else.
+
+CV Content:
+{cv_text[:2000] if cv_text else 'CV text could not be extracted.'}
+
+Available Jobs:
+{jobs_list}"""
+
+        resp = http_requests.post(
+            'https://openrouter.ai/api/v1/chat/completions',
+            headers={'Authorization': f'Bearer {OPENROUTER_API_KEY}',
+                     'Content-Type': 'application/json'},
+            json={'model': 'google/gemma-4-31b-it:free',
+                  'messages': [{'role': 'user', 'content': prompt}]},
+            timeout=30
+        )
+        import json, re
+        ai_text = resp.json()['choices'][0]['message']['content']
+        # Extract JSON from response
+        json_match = re.search(r'\[.*?\]', ai_text, re.DOTALL)
+        if json_match:
+            matches = json.loads(json_match.group())
+            for m in matches:
+                job = Job.query.get(m.get('id'))
+                if job:
+                    matched_jobs.append({'job': job, 'reason': m.get('reason', '')})
+        ai_summary = ai_text
+    except Exception as e:
+        error = 'AI matching failed. Showing all jobs instead.'
+        matched_jobs = [{'job': j, 'reason': ''} for j in all_jobs]
+
+    return render_template('cv_match.html',
+                           matched_jobs=matched_jobs,
+                           cv_filename=current_user.cv_path,
+                           error=error)
 
 # ─── Admin ────────────────────────────────────────────────────────────────────
 
