@@ -246,8 +246,8 @@ def delete_user(user_id):
 
 @app.route('/external-jobs')
 def external_jobs():
-    keyword  = request.args.get('q', 'software engineer')
-    location = request.args.get('location', 'Sri Lanka')
+    keyword  = request.args.get('q', 'developer')
+    location = request.args.get('location', '')
     page     = int(request.args.get('page', 1))
 
     payload = {
