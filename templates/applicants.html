@@ -1,43 +1,90 @@
 {% extends 'base.html' %}
 {% block content %}
-<h4 class="fw-bold mb-1">Applicants for: {{ job.title }}</h4>
-<p class="text-muted mb-4">{{ job.company }}</p>
+
+<div class="d-flex align-items-center gap-3 mb-4">
+  <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <div>
+    <h4 class="fw-bold mb-0">Applicants</h4>
+    <p class="text-muted small mb-0">
+      <i class="bi bi-briefcase me-1"></i>{{ job.title }} &bull;
+      <i class="bi bi-building me-1"></i>{{ job.company }}
+    </p>
+  </div>
+  <span class="badge ms-auto" style="background:#eff6ff;color:#1d4ed8;font-size:0.9rem;padding:8px 16px;border-radius:10px;">
+    {{ applicants|length }} Applicant{{ 's' if applicants|length != 1 }}
+  </span>
+</div>
 
 {% if applicants %}
-<div class="table-responsive">
-  <table class="table table-bordered table-hover align-middle">
-    <thead class="table-dark">
-      <tr><th>#</th><th>Name</th><th>Email</th><th>CV</th><th>Applied On</th><th>Status</th><th>Actions</th></tr>
-    </thead>
-    <tbody>
-      {% for app in applicants %}
-      <tr>
-        <td>{{ loop.index }}</td>
-        <td>{{ app.applicant.name }}</td>
-        <td>{{ app.applicant.email }}</td>
-        <td>
-          {% if app.cv_path %}
-          <a href="{{ url_for('static', filename='../uploads/cvs/' + app.cv_path) }}" target="_blank" class="btn btn-outline-primary btn-sm">View CV</a>
-          {% else %}<span class="text-muted">—</span>{% endif %}
-        </td>
-        <td>{{ app.applied_at.strftime('%d %b %Y') }}</td>
-        <td>
-          {% if app.status == 'accepted' %}<span class="badge bg-success">Accepted</span>
-          {% elif app.status == 'rejected' %}<span class="badge bg-danger">Rejected</span>
-          {% else %}<span class="badge bg-warning text-dark">Pending</span>{% endif %}
-        </td>
-        <td class="d-flex gap-1">
-          <a href="{{ url_for('update_status', app_id=app.id, status='accepted') }}" class="btn btn-success btn-sm">Accept</a>
-          <a href="{{ url_for('update_status', app_id=app.id, status='rejected') }}" class="btn btn-danger btn-sm">Reject</a>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div class="card border-0">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Applicant</th>
+          <th>Email</th>
+          <th>CV</th>
+          <th>Applied</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for app in applicants %}
+        <tr>
+          <td class="text-muted small">{{ loop.index }}</td>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div style="width:34px;height:34px;background:#eff6ff;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="bi bi-person text-primary small"></i>
+              </div>
+              <span class="fw-500 small">{{ app.applicant.name }}</span>
+            </div>
+          </td>
+          <td class="text-muted small">{{ app.applicant.email }}</td>
+          <td>
+            {% if app.cv_path %}
+            <a href="{{ url_for('static', filename='../uploads/cvs/' + app.cv_path) }}" target="_blank"
+               class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-file-earmark-pdf me-1"></i>View CV
+            </a>
+            {% else %}
+            <span class="text-muted small">Not uploaded</span>
+            {% endif %}
+          </td>
+          <td class="text-muted small">{{ app.applied_at.strftime('%d %b %Y') }}</td>
+          <td>
+            {% if app.status == 'accepted' %}
+              <span class="badge" style="background:#dcfce7;color:#166534;"><i class="bi bi-check-circle me-1"></i>Accepted</span>
+            {% elif app.status == 'rejected' %}
+              <span class="badge" style="background:#fee2e2;color:#991b1b;"><i class="bi bi-x-circle me-1"></i>Rejected</span>
+            {% else %}
+              <span class="badge" style="background:#fef3c7;color:#92400e;"><i class="bi bi-hourglass me-1"></i>Pending</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="d-flex gap-1">
+              <a href="{{ url_for('update_status', app_id=app.id, status='accepted') }}"
+                 class="btn btn-success btn-sm" title="Accept"><i class="bi bi-check-lg"></i></a>
+              <a href="{{ url_for('update_status', app_id=app.id, status='rejected') }}"
+                 class="btn btn-danger btn-sm" title="Reject"><i class="bi bi-x-lg"></i></a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
+
 {% else %}
-<p class="text-muted">No applicants yet.</p>
+<div class="card border-0 text-center py-5">
+  <i class="bi bi-people text-muted" style="font-size:3rem;"></i>
+  <p class="text-muted mt-3 mb-0">No applicants yet for this job.</p>
+</div>
 {% endif %}
 
-<a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary mt-3">Back to Dashboard</a>
 {% endblock %}

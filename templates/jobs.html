@@ -2,50 +2,106 @@
 {% block content %}
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h4 class="fw-bold mb-0">All Jobs</h4>
+  <div>
+    <h4 class="fw-bold mb-1">Browse Jobs</h4>
+    <p class="text-muted small mb-0">Find your perfect opportunity</p>
+  </div>
   {% if current_user.is_authenticated and current_user.role == 'employer' %}
-  <a href="{{ url_for('post_job') }}" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>Post Job</a>
+  <a href="{{ url_for('post_job') }}" class="btn btn-primary">
+    <i class="bi bi-plus-circle me-2"></i>Post a Job
+  </a>
   {% endif %}
 </div>
 
 <!-- Search -->
-<form method="GET" class="row g-2 mb-4">
-  <div class="col-md-5">
-    <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search by job title..."/>
-  </div>
-  <div class="col-md-4">
-    <input type="text" name="location" value="{{ location }}" class="form-control" placeholder="Location..."/>
-  </div>
-  <div class="col-md-2">
-    <button class="btn btn-primary w-100" type="submit"><i class="bi bi-search"></i> Search</button>
-  </div>
-</form>
+<div class="search-section mb-4">
+  <form method="GET">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-5">
+        <label class="form-label small fw-500 mb-1">Job Title or Keywords</label>
+        <div class="input-group">
+          <span class="input-group-text bg-white" style="border-radius:10px 0 0 10px;"><i class="bi bi-search text-muted"></i></span>
+          <input type="text" name="q" value="{{ query }}" class="form-control border-start-0"
+                 placeholder="e.g. Software Engineer" style="border-radius:0 10px 10px 0;"/>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small fw-500 mb-1">Location</label>
+        <div class="input-group">
+          <span class="input-group-text bg-white" style="border-radius:10px 0 0 10px;"><i class="bi bi-geo-alt text-muted"></i></span>
+          <input type="text" name="location" value="{{ location }}" class="form-control border-start-0"
+                 placeholder="e.g. Colombo" style="border-radius:0 10px 10px 0;"/>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-primary w-100" type="submit">
+          <i class="bi bi-search me-1"></i>Search
+        </button>
+      </div>
+      <div class="col-md-1">
+        <a href="{{ url_for('jobs') }}" class="btn btn-outline-secondary w-100" title="Clear">
+          <i class="bi bi-x-lg"></i>
+        </a>
+      </div>
+    </div>
+  </form>
+</div>
+
+{% if query or location %}
+<p class="text-muted small mb-3">
+  Showing results for
+  {% if query %}<strong>"{{ query }}"</strong>{% endif %}
+  {% if location %}in <strong>{{ location }}</strong>{% endif %}
+  — <a href="{{ url_for('jobs') }}">Clear filters</a>
+</p>
+{% endif %}
 
 <div class="row">
   {% for job in jobs %}
   <div class="col-md-6 mb-4">
-    <div class="card border-0 shadow-sm h-100">
+    <div class="card job-card h-100 border-0">
       <div class="card-body">
-        <h5 class="card-title">{{ job.title }}</h5>
-        <p class="text-muted mb-1"><i class="bi bi-building me-1"></i>{{ job.company }}</p>
-        <p class="text-muted mb-1"><i class="bi bi-geo-alt me-1"></i>{{ job.location }}</p>
+        <div class="d-flex align-items-start gap-3 mb-3">
+          <div style="width:48px;height:48px;background:#eff6ff;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-building text-primary fs-5"></i>
+          </div>
+          <div class="flex-grow-1">
+            <h5 class="job-title mb-0">{{ job.title }}</h5>
+            <span class="text-muted small">{{ job.company }}</span>
+          </div>
+          <span class="badge bg-light text-muted small">Full Time</span>
+        </div>
+        <div class="d-flex flex-wrap gap-3 mb-3">
+          <span class="job-meta"><i class="bi bi-geo-alt"></i>{{ job.location }}</span>
+          <span class="job-meta"><i class="bi bi-calendar3"></i>{{ job.created_at.strftime('%d %b %Y') }}</span>
+        </div>
         {% if job.salary %}
-        <p class="text-success mb-2"><i class="bi bi-cash me-1"></i>{{ job.salary }}</p>
+        <span class="salary-badge"><i class="bi bi-cash me-1"></i>{{ job.salary }}</span>
         {% endif %}
-        <p class="small text-muted">{{ job.description[:150] }}...</p>
+        <p class="small text-muted mt-3 mb-0" style="line-height:1.6;">{{ job.description[:160] }}...</p>
       </div>
-      <div class="card-footer bg-white border-0 d-flex gap-2">
+      <div class="card-footer d-flex justify-content-between align-items-center">
         {% if current_user.is_authenticated and current_user.role == 'jobseeker' %}
-        <a href="{{ url_for('apply_job', job_id=job.id) }}" class="btn btn-primary btn-sm">Apply Now</a>
+          <a href="{{ url_for('apply_job', job_id=job.id) }}" class="btn btn-primary btn-sm px-4">
+            <i class="bi bi-send me-1"></i>Apply Now
+          </a>
         {% elif not current_user.is_authenticated %}
-        <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-sm">Login to Apply</a>
+          <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-sm px-4">
+            <i class="bi bi-box-arrow-in-right me-1"></i>Login to Apply
+          </a>
+        {% else %}
+          <span></span>
         {% endif %}
-        <small class="text-muted ms-auto align-self-center">{{ job.created_at.strftime('%d %b %Y') }}</small>
+        <small class="text-muted">Posted {{ job.created_at.strftime('%d %b') }}</small>
       </div>
     </div>
   </div>
   {% else %}
-  <p class="text-muted">No jobs found.</p>
+  <div class="col-12 text-center py-5">
+    <i class="bi bi-search text-muted" style="font-size:3rem;"></i>
+    <p class="text-muted mt-3 mb-1">No jobs found matching your search.</p>
+    <a href="{{ url_for('jobs') }}" class="btn btn-outline-primary btn-sm">Clear Search</a>
+  </div>
   {% endfor %}
 </div>
 

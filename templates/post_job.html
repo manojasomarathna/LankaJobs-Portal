@@ -1,34 +1,59 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="row justify-content-center">
-  <div class="col-md-8">
-    <div class="card shadow-sm border-0">
-      <div class="card-body p-4">
-        <h4 class="fw-bold mb-4">{{ 'Edit Job' if job else 'Post a New Job' }}</h4>
+  <div class="col-md-8 col-lg-7">
+    <div class="card border-0" style="border-radius:18px; box-shadow:0 8px 40px rgba(0,0,0,0.1);">
+      <div class="card-body p-4 p-md-5">
+        <div class="d-flex align-items-center gap-3 mb-4">
+          <div style="width:48px;height:48px;background:#eff6ff;border-radius:12px;display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-briefcase-fill text-primary fs-5"></i>
+          </div>
+          <div>
+            <h4 class="fw-bold mb-0">{{ 'Edit Job' if job else 'Post a New Job' }}</h4>
+            <p class="text-muted small mb-0">{{ 'Update the job details below' if job else 'Fill in the details to attract the right candidates' }}</p>
+          </div>
+        </div>
         <form method="POST">
           <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label">Job Title</label>
-              <input type="text" name="title" class="form-control" value="{{ job.title if job else '' }}" required/>
+              <input type="text" name="title" class="form-control" value="{{ job.title if job else '' }}"
+                     placeholder="e.g. Software Engineer" required/>
             </div>
             <div class="col-md-6">
-              <label class="form-label">Company</label>
-              <input type="text" name="company" class="form-control" value="{{ job.company if job else '' }}" required/>
+              <label class="form-label">Company Name</label>
+              <input type="text" name="company" class="form-control" value="{{ job.company if job else '' }}"
+                     placeholder="e.g. ABC Technologies" required/>
             </div>
             <div class="col-md-6">
               <label class="form-label">Location</label>
-              <input type="text" name="location" class="form-control" value="{{ job.location if job else '' }}" required/>
+              <div class="input-group">
+                <span class="input-group-text bg-white"><i class="bi bi-geo-alt text-muted"></i></span>
+                <input type="text" name="location" class="form-control" value="{{ job.location if job else '' }}"
+                       placeholder="e.g. Colombo" required/>
+              </div>
             </div>
             <div class="col-md-6">
-              <label class="form-label">Salary</label>
-              <input type="text" name="salary" class="form-control" value="{{ job.salary if job else '' }}" placeholder="e.g. LKR 60,000"/>
+              <label class="form-label">Salary <span class="text-muted">(optional)</span></label>
+              <div class="input-group">
+                <span class="input-group-text bg-white"><i class="bi bi-cash text-muted"></i></span>
+                <input type="text" name="salary" class="form-control" value="{{ job.salary if job else '' }}"
+                       placeholder="e.g. LKR 80,000"/>
+              </div>
             </div>
             <div class="col-12">
-              <label class="form-label">Description</label>
-              <textarea name="description" class="form-control" rows="5" required>{{ job.description if job else '' }}</textarea>
+              <label class="form-label">Job Description</label>
+              <textarea name="description" class="form-control" rows="6"
+                        placeholder="Describe the role, responsibilities, requirements..." required>{{ job.description if job else '' }}</textarea>
             </div>
           </div>
-          <button type="submit" class="btn btn-primary mt-3 w-100">{{ 'Update Job' if job else 'Post Job' }}</button>
+          <div class="d-flex gap-3 mt-4">
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="bi bi-{{ 'check-circle' if job else 'plus-circle' }} me-2"></i>
+              {{ 'Update Job' if job else 'Post Job' }}
+            </button>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary px-4">Cancel</a>
+          </div>
         </form>
       </div>
     </div>

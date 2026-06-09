@@ -1,149 +1,211 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<h4 class="fw-bold mb-4">
-  <i class="bi bi-speedometer2 me-2 text-primary"></i>
-  {% if current_user.role == 'admin' %}Admin Dashboard
-  {% elif current_user.role == 'employer' %}Employer Dashboard
-  {% else %}My Dashboard
-  {% endif %}
-</h4>
+<div class="d-flex align-items-center gap-3 mb-4">
+  <div style="width:52px;height:52px;background:#eff6ff;border-radius:14px;display:flex;align-items:center;justify-content:center;">
+    <i class="bi bi-grid-fill text-primary fs-4"></i>
+  </div>
+  <div>
+    <h4 class="fw-bold mb-0">
+      {% if current_user.role == 'admin' %}Admin Dashboard
+      {% elif current_user.role == 'employer' %}Employer Dashboard
+      {% else %}My Dashboard{% endif %}
+    </h4>
+    <p class="text-muted small mb-0">Welcome back, <strong>{{ current_user.name }}</strong></p>
+  </div>
+</div>
 
-<!-- ── ADMIN ───────────────────────────────────────────────────── -->
+<!-- ══════════ ADMIN ══════════ -->
 {% if current_user.role == 'admin' %}
 
-<div class="row mb-4">
-  <div class="col-md-4">
-    <div class="card text-white bg-primary border-0 text-center p-3">
-      <h2>{{ users|length }}</h2><p class="mb-0">Total Users</p>
+<div class="row mb-5">
+  <div class="col-md-4 mb-3">
+    <div class="card dash-stat border-0" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);">
+      <div class="dash-stat-icon" style="background:#2563eb;">
+        <i class="bi bi-people-fill text-white"></i>
+      </div>
+      <div>
+        <h3 class="text-primary">{{ users|length }}</h3>
+        <p class="text-muted">Total Users</p>
+      </div>
     </div>
   </div>
-  <div class="col-md-4">
-    <div class="card text-white bg-success border-0 text-center p-3">
-      <h2>{{ jobs|length }}</h2><p class="mb-0">Total Jobs</p>
+  <div class="col-md-4 mb-3">
+    <div class="card dash-stat border-0" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);">
+      <div class="dash-stat-icon" style="background:#16a34a;">
+        <i class="bi bi-briefcase-fill text-white"></i>
+      </div>
+      <div>
+        <h3 class="text-success">{{ jobs|length }}</h3>
+        <p class="text-muted">Total Jobs</p>
+      </div>
     </div>
   </div>
-  <div class="col-md-4">
-    <div class="card text-white bg-warning border-0 text-center p-3">
-      <h2>{{ apps|length }}</h2><p class="mb-0">Applications</p>
+  <div class="col-md-4 mb-3">
+    <div class="card dash-stat border-0" style="background:linear-gradient(135deg,#fffbeb,#fef3c7);">
+      <div class="dash-stat-icon" style="background:#d97706;">
+        <i class="bi bi-file-earmark-text-fill text-white"></i>
+      </div>
+      <div>
+        <h3 class="text-warning">{{ apps|length }}</h3>
+        <p class="text-muted">Applications</p>
+      </div>
     </div>
   </div>
 </div>
 
-<h5 class="fw-bold mb-3">Manage Users</h5>
-<div class="table-responsive mb-5">
-  <table class="table table-bordered table-hover align-middle">
-    <thead class="table-dark"><tr><th>#</th><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Action</th></tr></thead>
-    <tbody>
-      {% for user in users %}
-      <tr>
-        <td>{{ user.id }}</td>
-        <td>{{ user.name }}</td>
-        <td>{{ user.email }}</td>
-        <td><span class="badge bg-secondary">{{ user.role }}</span></td>
-        <td>{{ user.created_at.strftime('%d %b %Y') }}</td>
-        <td>
-          {% if user.id != current_user.id %}
-          <a href="{{ url_for('delete_user', user_id=user.id) }}" class="btn btn-danger btn-sm"
-             onclick="return confirm('Delete this user?')">Delete</a>
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<h5 class="section-title"><i class="bi bi-people me-2 text-primary"></i>Manage Users</h5>
+<div class="card border-0 mb-5">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for user in users %}
+        <tr>
+          <td class="text-muted small">{{ user.id }}</td>
+          <td class="fw-500">{{ user.name }}</td>
+          <td class="text-muted small">{{ user.email }}</td>
+          <td>
+            {% if user.role == 'admin' %}<span class="badge" style="background:#fef3c7;color:#92400e;">Admin</span>
+            {% elif user.role == 'employer' %}<span class="badge" style="background:#eff6ff;color:#1d4ed8;">Employer</span>
+            {% else %}<span class="badge" style="background:#f0fdf4;color:#166534;">Job Seeker</span>{% endif %}
+          </td>
+          <td class="text-muted small">{{ user.created_at.strftime('%d %b %Y') }}</td>
+          <td>
+            {% if user.id != current_user.id %}
+            <a href="{{ url_for('delete_user', user_id=user.id) }}" class="btn btn-danger btn-sm"
+               onclick="return confirm('Delete this user?')"><i class="bi bi-trash"></i></a>
+            {% else %}<span class="text-muted small">—</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 
-<h5 class="fw-bold mb-3">Manage Jobs</h5>
-<div class="table-responsive">
-  <table class="table table-bordered table-hover align-middle">
-    <thead class="table-dark"><tr><th>#</th><th>Title</th><th>Company</th><th>Location</th><th>Posted</th><th>Actions</th></tr></thead>
-    <tbody>
-      {% for job in jobs %}
-      <tr>
-        <td>{{ job.id }}</td>
-        <td>{{ job.title }}</td>
-        <td>{{ job.company }}</td>
-        <td>{{ job.location }}</td>
-        <td>{{ job.created_at.strftime('%d %b %Y') }}</td>
-        <td class="d-flex gap-1">
-          <a href="{{ url_for('edit_job', job_id=job.id) }}" class="btn btn-warning btn-sm">Edit</a>
-          <a href="{{ url_for('delete_job', job_id=job.id) }}" class="btn btn-danger btn-sm"
-             onclick="return confirm('Delete this job?')">Delete</a>
-          <a href="{{ url_for('view_applicants', job_id=job.id) }}" class="btn btn-info btn-sm">Applicants</a>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5 class="section-title mb-0"><i class="bi bi-briefcase me-2 text-primary"></i>Manage Jobs</h5>
+</div>
+<div class="card border-0">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead><tr><th>Title</th><th>Company</th><th>Location</th><th>Posted</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for job in jobs %}
+        <tr>
+          <td class="fw-500">{{ job.title }}</td>
+          <td class="text-muted small">{{ job.company }}</td>
+          <td class="text-muted small">{{ job.location }}</td>
+          <td class="text-muted small">{{ job.created_at.strftime('%d %b %Y') }}</td>
+          <td>
+            <div class="d-flex gap-1">
+              <a href="{{ url_for('edit_job', job_id=job.id) }}" class="btn btn-warning btn-sm"><i class="bi bi-pencil"></i></a>
+              <a href="{{ url_for('delete_job', job_id=job.id) }}" class="btn btn-danger btn-sm"
+                 onclick="return confirm('Delete?')"><i class="bi bi-trash"></i></a>
+              <a href="{{ url_for('view_applicants', job_id=job.id) }}" class="btn btn-info btn-sm text-white">
+                <i class="bi bi-people"></i> {{ job.applications|length }}
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 
-<!-- ── EMPLOYER ────────────────────────────────────────────────── -->
+<!-- ══════════ EMPLOYER ══════════ -->
 {% elif current_user.role == 'employer' %}
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h5 class="fw-bold mb-0">My Job Listings</h5>
-  <a href="{{ url_for('post_job') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle me-1"></i>Post New Job</a>
+  <h5 class="section-title mb-0"><i class="bi bi-briefcase me-2 text-primary"></i>My Job Listings</h5>
+  <a href="{{ url_for('post_job') }}" class="btn btn-primary btn-sm px-3">
+    <i class="bi bi-plus-circle me-1"></i>Post New Job
+  </a>
 </div>
 
 {% if jobs %}
-<div class="table-responsive">
-  <table class="table table-bordered table-hover align-middle">
-    <thead class="table-dark"><tr><th>Title</th><th>Location</th><th>Salary</th><th>Posted</th><th>Actions</th></tr></thead>
-    <tbody>
-      {% for job in jobs %}
-      <tr>
-        <td>{{ job.title }}</td>
-        <td>{{ job.location }}</td>
-        <td>{{ job.salary or '—' }}</td>
-        <td>{{ job.created_at.strftime('%d %b %Y') }}</td>
-        <td class="d-flex gap-1">
-          <a href="{{ url_for('edit_job', job_id=job.id) }}" class="btn btn-warning btn-sm">Edit</a>
-          <a href="{{ url_for('delete_job', job_id=job.id) }}" class="btn btn-danger btn-sm"
-             onclick="return confirm('Delete?')">Delete</a>
-          <a href="{{ url_for('view_applicants', job_id=job.id) }}" class="btn btn-info btn-sm">
-            Applicants <span class="badge bg-white text-dark">{{ job.applications|length }}</span>
-          </a>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div class="card border-0">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead><tr><th>Title</th><th>Location</th><th>Salary</th><th>Posted</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for job in jobs %}
+        <tr>
+          <td class="fw-500">{{ job.title }}</td>
+          <td class="text-muted small"><i class="bi bi-geo-alt me-1"></i>{{ job.location }}</td>
+          <td>
+            {% if job.salary %}<span class="salary-badge">{{ job.salary }}</span>
+            {% else %}<span class="text-muted">—</span>{% endif %}
+          </td>
+          <td class="text-muted small">{{ job.created_at.strftime('%d %b %Y') }}</td>
+          <td>
+            <div class="d-flex gap-1">
+              <a href="{{ url_for('edit_job', job_id=job.id) }}" class="btn btn-warning btn-sm"><i class="bi bi-pencil"></i></a>
+              <a href="{{ url_for('delete_job', job_id=job.id) }}" class="btn btn-danger btn-sm"
+                 onclick="return confirm('Delete this job?')"><i class="bi bi-trash"></i></a>
+              <a href="{{ url_for('view_applicants', job_id=job.id) }}" class="btn btn-primary btn-sm">
+                <i class="bi bi-people me-1"></i>{{ job.applications|length }}
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% else %}
-<p class="text-muted">No jobs posted yet. <a href="{{ url_for('post_job') }}">Post your first job!</a></p>
+<div class="card border-0 text-center py-5">
+  <i class="bi bi-briefcase text-muted" style="font-size:3rem;"></i>
+  <p class="text-muted mt-3 mb-3">You haven't posted any jobs yet.</p>
+  <div><a href="{{ url_for('post_job') }}" class="btn btn-primary px-4"><i class="bi bi-plus-circle me-2"></i>Post Your First Job</a></div>
+</div>
 {% endif %}
 
-<!-- ── JOB SEEKER ──────────────────────────────────────────────── -->
+<!-- ══════════ JOB SEEKER ══════════ -->
 {% else %}
 
-<h5 class="fw-bold mb-3">My Applications</h5>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5 class="section-title mb-0"><i class="bi bi-file-earmark-text me-2 text-primary"></i>My Applications</h5>
+  <a href="{{ url_for('jobs') }}" class="btn btn-outline-primary btn-sm px-3">
+    <i class="bi bi-search me-1"></i>Browse Jobs
+  </a>
+</div>
+
 {% if apps %}
-<div class="table-responsive">
-  <table class="table table-bordered table-hover align-middle">
-    <thead class="table-dark"><tr><th>Job Title</th><th>Company</th><th>Applied On</th><th>Status</th></tr></thead>
-    <tbody>
-      {% for app in apps %}
-      <tr>
-        <td>{{ app.job.title }}</td>
-        <td>{{ app.job.company }}</td>
-        <td>{{ app.applied_at.strftime('%d %b %Y') }}</td>
-        <td>
-          {% if app.status == 'accepted' %}
-            <span class="badge bg-success">Accepted</span>
-          {% elif app.status == 'rejected' %}
-            <span class="badge bg-danger">Rejected</span>
-          {% else %}
-            <span class="badge bg-warning text-dark">Pending</span>
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div class="card border-0">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead><tr><th>Job Title</th><th>Company</th><th>Applied On</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for app in apps %}
+        <tr>
+          <td class="fw-500">{{ app.job.title }}</td>
+          <td class="text-muted small"><i class="bi bi-building me-1"></i>{{ app.job.company }}</td>
+          <td class="text-muted small">{{ app.applied_at.strftime('%d %b %Y') }}</td>
+          <td>
+            {% if app.status == 'accepted' %}
+              <span class="badge" style="background:#dcfce7;color:#166534;"><i class="bi bi-check-circle me-1"></i>Accepted</span>
+            {% elif app.status == 'rejected' %}
+              <span class="badge" style="background:#fee2e2;color:#991b1b;"><i class="bi bi-x-circle me-1"></i>Rejected</span>
+            {% else %}
+              <span class="badge" style="background:#fef3c7;color:#92400e;"><i class="bi bi-hourglass me-1"></i>Pending</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% else %}
-<p class="text-muted">You haven't applied for any jobs yet. <a href="{{ url_for('jobs') }}">Browse jobs</a></p>
+<div class="card border-0 text-center py-5">
+  <i class="bi bi-file-earmark-text text-muted" style="font-size:3rem;"></i>
+  <p class="text-muted mt-3 mb-3">You haven't applied for any jobs yet.</p>
+  <div><a href="{{ url_for('jobs') }}" class="btn btn-primary px-4"><i class="bi bi-search me-2"></i>Browse Jobs</a></div>
+</div>
 {% endif %}
 
 {% endif %}
