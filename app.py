@@ -1,20 +1,24 @@
 import os
 import requests as http_requests
-from flask import Flask, render_template, redirect, url_for, request, flash, session
+from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from models import db, User, Job, Application
+from dotenv import load_dotenv
 
-JOOBLE_API_KEY  = '04fdd77e-720e-4ad3-a47a-ae9e69184dc0'
-JOOBLE_API_URL  = f'https://jooble.org/api/{JOOBLE_API_KEY}'
-REMOTEOK_API_URL = 'https://remoteok.com/api'
+load_dotenv()
+
+OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
+JOOBLE_API_KEY     = os.getenv('JOOBLE_API_KEY')
+JOOBLE_API_URL     = f'https://jooble.org/api/{JOOBLE_API_KEY}'
+REMOTEOK_API_URL   = 'https://remoteok.com/api'
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'lankajobs-secret-key-2024'
+app.config['SECRET_KEY']              = os.getenv('SECRET_KEY', 'lankajobs-secret-key-2024')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///lankajobs.db'
-app.config['UPLOAD_FOLDER'] = 'uploads/cvs'
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB
+app.config['UPLOAD_FOLDER']           = 'uploads/cvs'
+app.config['MAX_CONTENT_LENGTH']      = 5 * 1024 * 1024
 
 db.init_app(app)
 login_manager = LoginManager(app)
@@ -29,14 +33,14 @@ def allowed_file(filename):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# ─── Home ────────────────────────────────────────────────────────────────────
+# ─── Home ─────────────────────────────────────────────────────────────────────
 
 @app.route('/')
 def index():
     jobs = Job.query.order_by(Job.created_at.desc()).limit(6).all()
     return render_template('index.html', jobs=jobs)
 
-# ─── Auth ────────────────────────────────────────────────────────────────────
+# ─── Auth ─────────────────────────────────────────────────────────────────────
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -45,11 +49,9 @@ def register():
         email    = request.form['email']
         password = request.form['password']
         role     = request.form['role']
-
         if User.query.filter_by(email=email).first():
             flash('Email already registered.', 'danger')
             return redirect(url_for('register'))
-
         user = User(name=name, email=email,
                     password=generate_password_hash(password), role=role)
         db.session.add(user)
@@ -78,7 +80,7 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
-# ─── Dashboard (role-based) ──────────────────────────────────────────────────
+# ─── Dashboard ────────────────────────────────────────────────────────────────
 
 @app.route('/dashboard')
 @login_required
@@ -95,11 +97,11 @@ def dashboard():
         apps = Application.query.filter_by(user_id=current_user.id).all()
         return render_template('dashboard.html', apps=apps)
 
-# ─── Jobs ────────────────────────────────────────────────────────────────────
+# ─── Jobs ─────────────────────────────────────────────────────────────────────
 
 @app.route('/jobs')
 def jobs():
-    query = request.args.get('q', '')
+    query    = request.args.get('q', '')
     location = request.args.get('location', '')
     job_list = Job.query
     if query:
@@ -163,7 +165,7 @@ def delete_job(job_id):
     flash('Job deleted.', 'success')
     return redirect(url_for('dashboard'))
 
-# ─── Apply ───────────────────────────────────────────────────────────────────
+# ─── Apply ────────────────────────────────────────────────────────────────────
 
 @app.route('/jobs/apply/<int:job_id>', methods=['GET', 'POST'])
 @login_required
@@ -190,7 +192,7 @@ def apply_job(job_id):
         return redirect(url_for('dashboard'))
     return render_template('apply.html', job=job)
 
-# ─── Applicants (employer) ───────────────────────────────────────────────────
+# ─── Applicants ───────────────────────────────────────────────────────────────
 
 @app.route('/jobs/<int:job_id>/applicants')
 @login_required
@@ -216,7 +218,7 @@ def update_status(app_id, status):
     flash(f'Application {status}.', 'success')
     return redirect(url_for('view_applicants', job_id=job.id))
 
-# ─── Profile ─────────────────────────────────────────────────────────────────
+# ─── Profile ──────────────────────────────────────────────────────────────────
 
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
@@ -229,7 +231,7 @@ def profile():
         flash('Profile updated.', 'success')
     return render_template('profile.html')
 
-# ─── Admin: delete user ───────────────────────────────────────────────────────
+# ─── Admin ────────────────────────────────────────────────────────────────────
 
 @app.route('/admin/delete_user/<int:user_id>')
 @login_required
@@ -243,71 +245,55 @@ def delete_user(user_id):
     flash('User deleted.', 'success')
     return redirect(url_for('dashboard'))
 
-# ─── External Jobs ───────────────────────────────────────────────────────────
+# ─── External Jobs ────────────────────────────────────────────────────────────
 
 def fetch_remoteok_jobs(keyword='', page=1):
     try:
-        resp = http_requests.get(
-            REMOTEOK_API_URL,
-            headers={'User-Agent': 'Mozilla/5.0'},
-            timeout=10
-        )
+        resp = http_requests.get(REMOTEOK_API_URL,
+                                 headers={'User-Agent': 'Mozilla/5.0'}, timeout=10)
         data = resp.json()
         jobs = [j for j in data if isinstance(j, dict) and 'position' in j]
-
         if keyword:
-            kw = keyword.lower()
+            kw   = keyword.lower()
             jobs = [j for j in jobs
                     if kw in j.get('position', '').lower()
                     or kw in j.get('company', '').lower()
                     or any(kw in t.lower() for t in j.get('tags', []))]
-
         per_page = 20
         total    = len(jobs)
-        start    = (page - 1) * per_page
-        jobs     = jobs[start:start + per_page]
-
-        normalized = []
-        for j in jobs:
-            normalized.append({
-                'title':   j.get('position', ''),
-                'company': j.get('company', ''),
-                'location': j.get('location', 'Worldwide 🌍'),
-                'salary':  j.get('salary', ''),
-                'snippet': j.get('description', '')[:200] if j.get('description') else '',
-                'link':    j.get('url', f"https://remoteok.com/remote-jobs/{j.get('id', '')}"),
-                'tags':    j.get('tags', [])[:4],
-                'date':    j.get('date', '')[:10] if j.get('date') else '',
-                'source':  'RemoteOK'
-            })
-        return normalized, total
+        jobs     = jobs[(page-1)*per_page : page*per_page]
+        return [{
+            'title':    j.get('position', ''),
+            'company':  j.get('company', ''),
+            'location': j.get('location', 'Worldwide 🌍'),
+            'salary':   j.get('salary', ''),
+            'snippet':  (j.get('description') or '')[:200],
+            'link':     j.get('url', f"https://remoteok.com/remote-jobs/{j.get('id','')}"),
+            'tags':     j.get('tags', [])[:4],
+            'date':     (j.get('date') or '')[:10],
+            'source':   'RemoteOK'
+        } for j in jobs], total
     except Exception:
         return [], 0
 
 
 def fetch_jooble_jobs(keyword='developer', location='', page=1):
     try:
-        resp = http_requests.post(
-            JOOBLE_API_URL,
-            json={'keywords': keyword, 'location': location, 'page': page},
-            headers={'Content-Type': 'application/json'},
-            timeout=10
-        )
+        resp = http_requests.post(JOOBLE_API_URL,
+                                  json={'keywords': keyword, 'location': location, 'page': page},
+                                  headers={'Content-Type': 'application/json'}, timeout=10)
         data = resp.json()
-        jobs = []
-        for j in data.get('jobs', []):
-            jobs.append({
-                'title':   j.get('title', ''),
-                'company': j.get('company', ''),
-                'location': j.get('location', ''),
-                'salary':  j.get('salary', ''),
-                'snippet': j.get('snippet', '')[:200],
-                'link':    j.get('link', ''),
-                'tags':    [],
-                'date':    j.get('updated', '')[:10] if j.get('updated') else '',
-                'source':  'Jooble'
-            })
-        return jobs, data.get('totalCount', 0)
+        return [{
+            'title':    j.get('title', ''),
+            'company':  j.get('company', ''),
+            'location': j.get('location', ''),
+            'salary':   j.get('salary', ''),
+            'snippet':  j.get('snippet', '')[:200],
+            'link':     j.get('link', ''),
+            'tags':     [],
+            'date':     (j.get('updated') or '')[:10],
+            'source':   'Jooble'
+        } for j in data.get('jobs', [])], data.get('totalCount', 0)
     except Exception:
         return [], 0
 
@@ -318,8 +304,6 @@ def external_jobs():
     location = request.args.get('location', '')
     source   = request.args.get('source', 'remoteok')
     page     = int(request.args.get('page', 1))
-    ext_jobs = []
-    total    = 0
     error    = None
 
     if source == 'jooble':
@@ -327,24 +311,61 @@ def external_jobs():
     else:
         ext_jobs, total = fetch_remoteok_jobs(keyword, page)
 
-    if not ext_jobs and not error:
+    if not ext_jobs:
         error = 'No jobs found. Try different keywords.' if keyword else None
 
     return render_template('external_jobs.html',
-                           ext_jobs=ext_jobs,
-                           keyword=keyword,
-                           location=location,
-                           source=source,
-                           page=page,
-                           total=total,
-                           error=error)
+                           ext_jobs=ext_jobs, keyword=keyword, location=location,
+                           source=source, page=page, total=total, error=error)
 
-# ─── Init & Run ──────────────────────────────────────────────────────────────
+# ─── AI Chatbot ───────────────────────────────────────────────────────────────
+
+@app.route('/chatbot')
+def chatbot():
+    return render_template('chatbot.html')
+
+
+@app.route('/chatbot/ask', methods=['POST'])
+def chatbot_ask():
+    user_msg = request.json.get('message', '').strip()
+    if not user_msg:
+        return {'reply': 'Please type a message.'}
+
+    jobs = Job.query.order_by(Job.created_at.desc()).limit(10).all()
+    jobs_context = '\n'.join(
+        [f"- {j.title} at {j.company}, {j.location}, Salary: {j.salary or 'N/A'}" for j in jobs]
+    ) or 'No jobs currently posted.'
+
+    system_prompt = f"""You are LankaJobs AI Assistant - a helpful job portal bot for Sri Lanka.
+Help users find jobs, write CVs, prepare for interviews, and use the portal.
+Be friendly, concise, and helpful. Reply in the same language the user uses (Sinhala or English).
+
+Available jobs on LankaJobs:
+{jobs_context}
+
+Portal features: Browse Jobs, Apply Jobs, Post Jobs (employers), Admin Dashboard."""
+
+    try:
+        resp = http_requests.post(
+            'https://openrouter.ai/api/v1/chat/completions',
+            headers={'Authorization': f'Bearer {OPENROUTER_API_KEY}',
+                     'Content-Type': 'application/json'},
+            json={'model': 'google/gemma-4-31b-it:free',
+                  'messages': [{'role': 'system', 'content': system_prompt},
+                                {'role': 'user',   'content': user_msg}]},
+            timeout=20
+        )
+        reply = resp.json()['choices'][0]['message']['content']
+    except Exception:
+        reply = 'Sorry, I could not process your request. Please try again.'
+
+    return {'reply': reply}
+
+# ─── Init & Run ───────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        # Create default admin
         if not User.query.filter_by(role='admin').first():
             admin = User(name='Admin', email='admin@lankajobs.lk',
                          password=generate_password_hash('admin123'), role='admin')
