@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-4">
+        <h4 class="fw-bold mb-4"><i class="bi bi-person-circle me-2 text-primary"></i>Edit Profile</h4>
+        <form method="POST">
+          <div class="mb-3">
+            <label class="form-label">Full Name</label>
+            <input type="text" name="name" class="form-control" value="{{ current_user.name }}" required/>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" value="{{ current_user.email }}" disabled/>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">New Password <small class="text-muted">(leave blank to keep current)</small></label>
+            <input type="password" name="password" class="form-control"/>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Role</label>
+            <input type="text" class="form-control" value="{{ current_user.role }}" disabled/>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Update Profile</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

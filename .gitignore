@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+instance/
+*.db
+uploads/cvs/*
+!uploads/cvs/.gitkeep
+.env
+venv/
+.venv/
