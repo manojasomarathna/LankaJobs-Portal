@@ -6,8 +6,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from models import db, User, Job, Application
 
-JOOBLE_API_KEY = '04fdd77e-720e-4ad3-a47a-ae9e69184dc0'
-JOOBLE_API_URL = f'https://jooble.org/api/{JOOBLE_API_KEY}'
+JOOBLE_API_KEY  = '04fdd77e-720e-4ad3-a47a-ae9e69184dc0'
+JOOBLE_API_URL  = f'https://jooble.org/api/{JOOBLE_API_KEY}'
+REMOTEOK_API_URL = 'https://remoteok.com/api'
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'lankajobs-secret-key-2024'
@@ -242,40 +243,98 @@ def delete_user(user_id):
     flash('User deleted.', 'success')
     return redirect(url_for('dashboard'))
 
-# ─── External Jobs (Jooble) ─────────────────────────────────────────────────
+# ─── External Jobs ───────────────────────────────────────────────────────────
+
+def fetch_remoteok_jobs(keyword='', page=1):
+    try:
+        resp = http_requests.get(
+            REMOTEOK_API_URL,
+            headers={'User-Agent': 'Mozilla/5.0'},
+            timeout=10
+        )
+        data = resp.json()
+        jobs = [j for j in data if isinstance(j, dict) and 'position' in j]
+
+        if keyword:
+            kw = keyword.lower()
+            jobs = [j for j in jobs
+                    if kw in j.get('position', '').lower()
+                    or kw in j.get('company', '').lower()
+                    or any(kw in t.lower() for t in j.get('tags', []))]
+
+        per_page = 20
+        total    = len(jobs)
+        start    = (page - 1) * per_page
+        jobs     = jobs[start:start + per_page]
+
+        normalized = []
+        for j in jobs:
+            normalized.append({
+                'title':   j.get('position', ''),
+                'company': j.get('company', ''),
+                'location': j.get('location', 'Worldwide 🌍'),
+                'salary':  j.get('salary', ''),
+                'snippet': j.get('description', '')[:200] if j.get('description') else '',
+                'link':    j.get('url', f"https://remoteok.com/remote-jobs/{j.get('id', '')}"),
+                'tags':    j.get('tags', [])[:4],
+                'date':    j.get('date', '')[:10] if j.get('date') else '',
+                'source':  'RemoteOK'
+            })
+        return normalized, total
+    except Exception:
+        return [], 0
+
+
+def fetch_jooble_jobs(keyword='developer', location='', page=1):
+    try:
+        resp = http_requests.post(
+            JOOBLE_API_URL,
+            json={'keywords': keyword, 'location': location, 'page': page},
+            headers={'Content-Type': 'application/json'},
+            timeout=10
+        )
+        data = resp.json()
+        jobs = []
+        for j in data.get('jobs', []):
+            jobs.append({
+                'title':   j.get('title', ''),
+                'company': j.get('company', ''),
+                'location': j.get('location', ''),
+                'salary':  j.get('salary', ''),
+                'snippet': j.get('snippet', '')[:200],
+                'link':    j.get('link', ''),
+                'tags':    [],
+                'date':    j.get('updated', '')[:10] if j.get('updated') else '',
+                'source':  'Jooble'
+            })
+        return jobs, data.get('totalCount', 0)
+    except Exception:
+        return [], 0
+
 
 @app.route('/external-jobs')
 def external_jobs():
-    keyword  = request.args.get('q', 'developer')
+    keyword  = request.args.get('q', '')
     location = request.args.get('location', '')
+    source   = request.args.get('source', 'remoteok')
     page     = int(request.args.get('page', 1))
-
-    payload = {
-        'keywords': keyword,
-        'location': location,
-        'page': page
-    }
     ext_jobs = []
     total    = 0
     error    = None
 
-    try:
-        resp = http_requests.post(
-            JOOBLE_API_URL,
-            json=payload,
-            headers={'Content-Type': 'application/json'},
-            timeout=10
-        )
-        data     = resp.json()
-        ext_jobs = data.get('jobs', [])
-        total    = data.get('totalCount', 0)
-    except Exception as e:
-        error = 'Could not fetch jobs. Please try again.'
+    if source == 'jooble':
+        ext_jobs, total = fetch_jooble_jobs(keyword or 'developer', location, page)
+    else:
+        ext_jobs, total = fetch_remoteok_jobs(keyword, page)
+
+    if not ext_jobs and not error:
+        error = 'No jobs found. Try different keywords.' if keyword else None
 
     return render_template('external_jobs.html',
                            ext_jobs=ext_jobs,
                            keyword=keyword,
                            location=location,
+                           source=source,
                            page=page,
                            total=total,
                            error=error)

@@ -7,13 +7,28 @@
   </div>
   <div>
     <h4 class="fw-bold mb-0">External Jobs</h4>
-    <p class="text-muted small mb-0">Live jobs powered by <strong>Jooble</strong> — from around the web</p>
+    <p class="text-muted small mb-0">Real-time jobs from around the world</p>
   </div>
 </div>
 
+<!-- Source Switcher -->
+<div class="d-flex gap-2 mb-4">
+  <a href="{{ url_for('external_jobs', q=keyword, source='remoteok') }}"
+     class="btn {% if source == 'remoteok' %}btn-primary{% else %}btn-outline-secondary{% endif %} btn-sm px-4">
+    <i class="bi bi-laptop me-1"></i>RemoteOK
+    <span class="badge {% if source == 'remoteok' %}bg-white text-primary{% else %}bg-secondary{% endif %} ms-1">100% Free</span>
+  </a>
+  <a href="{{ url_for('external_jobs', q=keyword, source='jooble') }}"
+     class="btn {% if source == 'jooble' %}btn-primary{% else %}btn-outline-secondary{% endif %} btn-sm px-4">
+    <i class="bi bi-briefcase me-1"></i>Jooble
+    <span class="badge {% if source == 'jooble' %}bg-white text-primary{% else %}bg-secondary{% endif %} ms-1">Global</span>
+  </a>
+</div>
+
 <!-- Search -->
-<div class="search-section mb-3">
+<div class="search-section mb-4">
   <form method="GET" id="searchForm">
+    <input type="hidden" name="source" value="{{ source }}"/>
     <div class="row g-3 align-items-end">
       <div class="col-md-6">
         <label class="form-label small fw-500 mb-1">Job Title / Keywords</label>
@@ -21,10 +36,12 @@
           <span class="input-group-text bg-white" style="border-radius:10px 0 0 10px;">
             <i class="bi bi-search text-muted"></i>
           </span>
-          <input type="text" name="q" id="keywordInput" value="{{ keyword }}" class="form-control border-start-0"
-                 placeholder="e.g. Software Engineer, Accountant..." style="border-radius:0 10px 10px 0;"/>
+          <input type="text" name="q" id="keywordInput" value="{{ keyword }}"
+                 class="form-control border-start-0" placeholder="e.g. Python Developer, Accountant..."
+                 style="border-radius:0 10px 10px 0;"/>
         </div>
       </div>
+      {% if source == 'jooble' %}
       <div class="col-md-3">
         <label class="form-label small fw-500 mb-1">Country</label>
         <select name="location" class="form-select">
@@ -39,6 +56,9 @@
         </select>
       </div>
       <div class="col-md-3">
+      {% else %}
+      <div class="col-md-6">
+      {% endif %}
         <button class="btn btn-primary w-100" type="submit">
           <i class="bi bi-search me-1"></i>Search Jobs
         </button>
@@ -46,18 +66,13 @@
     </div>
   </form>
 
-  <!-- Quick Search Job Titles -->
+  <!-- Quick Search Buttons -->
   <div class="mt-3">
-    <p class="text-muted small mb-2 fw-500"><i class="bi bi-lightning-charge me-1 text-warning"></i>Popular Job Titles:</p>
+    <p class="text-muted small mb-2 fw-500"><i class="bi bi-lightning-charge me-1 text-warning"></i>Popular:</p>
     <div class="d-flex flex-wrap gap-2">
-      {% set popular = [
-        'Software Engineer', 'Python Developer', 'Web Developer', 'Data Analyst',
-        'Accountant', 'Marketing Manager', 'HR Manager', 'Project Manager',
-        'Graphic Designer', 'Network Engineer', 'Business Analyst', 'DevOps Engineer',
-        'Full Stack Developer', 'UI UX Designer', 'Financial Analyst', 'Sales Manager'
-      ] %}
-      {% for title in popular %}
-      <button type="button" class="btn btn-sm btn-outline-secondary quick-search-btn"
+      {% for title in ['Developer','Python','Java','React','DevOps','Data Analyst','UI UX','Marketing','Accountant','HR Manager','Project Manager','Node.js','Flutter','Machine Learning','Cybersecurity','Cloud Engineer'] %}
+      <button type="button"
+              class="btn btn-sm btn-outline-secondary"
               style="border-radius:20px; font-size:0.78rem;"
               onclick="document.getElementById('keywordInput').value='{{ title }}'; document.getElementById('searchForm').submit();">
         {{ title }}
@@ -68,18 +83,16 @@
 </div>
 
 {% if error %}
-<div class="alert alert-danger"><i class="bi bi-exclamation-circle me-2"></i>{{ error }}</div>
+<div class="alert alert-warning"><i class="bi bi-info-circle me-2"></i>{{ error }}</div>
 {% endif %}
 
 {% if total > 0 %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <p class="text-muted small mb-0">
-    Found <strong>{{ total }}</strong> jobs for <strong>"{{ keyword }}"</strong> in <strong>{{ location }}</strong>
-  </p>
-  <span class="badge" style="background:#eff6ff;color:#1d4ed8;padding:6px 14px;border-radius:8px;">
-    Page {{ page }}
-  </span>
-</div>
+<p class="text-muted small mb-3">
+  <strong>{{ total }}</strong> jobs found
+  {% if keyword %}for <strong>"{{ keyword }}"</strong>{% endif %}
+  {% if location %}in <strong>{{ location }}</strong>{% endif %}
+  — Page {{ page }}
+</p>
 {% endif %}
 
 <div class="row">
@@ -87,43 +100,55 @@
   <div class="col-md-6 mb-4">
     <div class="card job-card h-100 border-0">
       <div class="card-body">
-
         <div class="d-flex align-items-start gap-3 mb-3">
           <div style="width:48px;height:48px;background:#f0fdf4;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <i class="bi bi-globe text-success fs-5"></i>
+            <i class="bi bi-building text-success fs-5"></i>
           </div>
           <div class="flex-grow-1">
             <h6 class="job-title mb-0">{{ job.title }}</h6>
             <span class="text-muted small">{{ job.company }}</span>
           </div>
-          <span class="badge" style="background:#f0fdf4;color:#166534;font-size:0.72rem;">External</span>
+          <span class="badge" style="background:#f0fdf4;color:#166534;font-size:0.72rem;">
+            {{ job.source }}
+          </span>
         </div>
 
         <div class="d-flex flex-wrap gap-3 mb-2">
           {% if job.location %}
           <span class="job-meta"><i class="bi bi-geo-alt"></i>{{ job.location }}</span>
           {% endif %}
-          {% if job.updated %}
-          <span class="job-meta"><i class="bi bi-calendar3"></i>{{ job.updated[:10] }}</span>
+          {% if job.date %}
+          <span class="job-meta"><i class="bi bi-calendar3"></i>{{ job.date }}</span>
           {% endif %}
         </div>
 
         {% if job.salary %}
-        <span class="salary-badge mb-2 d-inline-block"><i class="bi bi-cash me-1"></i>{{ job.salary }}</span>
+        <span class="salary-badge d-inline-block mb-2">
+          <i class="bi bi-cash me-1"></i>{{ job.salary }}
+        </span>
+        {% endif %}
+
+        {% if job.tags %}
+        <div class="d-flex flex-wrap gap-1 mb-2">
+          {% for tag in job.tags %}
+          <span class="badge" style="background:#eff6ff;color:#1d4ed8;font-weight:400;">{{ tag }}</span>
+          {% endfor %}
+        </div>
         {% endif %}
 
         {% if job.snippet %}
         <p class="small text-muted mt-2 mb-0" style="line-height:1.6;">
-          {{ job.snippet[:180] }}...
+          {{ job.snippet | striptags }}...
         </p>
         {% endif %}
-
       </div>
+
       <div class="card-footer d-flex justify-content-between align-items-center">
-        <a href="{{ job.link }}" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-sm px-4">
-          <i class="bi bi-box-arrow-up-right me-1"></i>Apply on Site
+        <a href="{{ job.link }}" target="_blank" rel="noopener noreferrer"
+           class="btn btn-success btn-sm px-4">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Apply Now
         </a>
-        <small class="text-muted">via Jooble</small>
+        <small class="text-muted">via {{ job.source }}</small>
       </div>
     </div>
   </div>
@@ -131,8 +156,8 @@
   {% if not error %}
   <div class="col-12 text-center py-5">
     <i class="bi bi-search text-muted" style="font-size:3rem;"></i>
-    <p class="text-muted mt-3 mb-1">No external jobs found.</p>
-    <p class="text-muted small">Try different keywords or location</p>
+    <p class="text-muted mt-3 mb-1">No jobs found.</p>
+    <p class="text-muted small">Try a different keyword from the popular list above</p>
   </div>
   {% endif %}
   {% endfor %}
@@ -140,15 +165,15 @@
 
 <!-- Pagination -->
 {% if total > 0 %}
-<div class="d-flex justify-content-center gap-2 mt-3">
+<div class="d-flex justify-content-center gap-2 mt-3 mb-4">
   {% if page > 1 %}
-  <a href="{{ url_for('external_jobs', q=keyword, location=location, page=page-1) }}"
+  <a href="{{ url_for('external_jobs', q=keyword, location=location, source=source, page=page-1) }}"
      class="btn btn-outline-primary px-4">
     <i class="bi bi-arrow-left me-1"></i>Previous
   </a>
   {% endif %}
   {% if ext_jobs|length == 20 %}
-  <a href="{{ url_for('external_jobs', q=keyword, location=location, page=page+1) }}"
+  <a href="{{ url_for('external_jobs', q=keyword, location=location, source=source, page=page+1) }}"
      class="btn btn-primary px-4">
     Next <i class="bi bi-arrow-right ms-1"></i>
   </a>
